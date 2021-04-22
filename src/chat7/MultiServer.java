@@ -36,8 +36,10 @@ public class MultiServer {
 			System.out.println("서버가 시작되었습니다.");
 
 			while(true) {
+				
+				//접속허가
 				socket = serverSocket.accept();
-				System.out.println(
+					System.out.println(
 					socket.getInetAddress()+"(클라이언트)의 "
 					+socket.getPort()+" 포트를통해 "
 					+socket.getLocalAddress()+"(서버)의"
@@ -51,11 +53,12 @@ public class MultiServer {
 				mst.start();
 			}
 		}
+
 		catch (Exception e) {
 			e.printStackTrace();
 		}
 		finally {
-			try {
+			try {	
 				serverSocket.close();
 			}
 			catch (Exception e) {
@@ -70,7 +73,7 @@ public class MultiServer {
 	}
 	
 	//접속된 모든 클라이언트에게 메세지를 전달하는 메소드
-	public void sendAllMsg(String name, String msg)
+	public void sendAllMsg(String name, String msg, String flag)
 	{
 		//Map에 저장된 객체의 키값(접속자명)을 먼저 얻어온다.
 		Iterator<String> it = clientMap.keySet().iterator();
@@ -78,22 +81,37 @@ public class MultiServer {
 		//저장된 객체(클라이언트)의 갯수만큼 반복한다. 
 		while(it.hasNext()) {
 			try {
+				
+				//컬렉션의 key는 클라이언트의 대화명이다.
+				String clientName = it.next();
+				
 				//각 클라이언트의 PrintWriter객체를 얻어온다. 
 				PrintWriter it_out = 
-						(PrintWriter) clientMap.get(it.next());
+						(PrintWriter) clientMap.get(clientName);
 				
-				/*
-				클라이언트에게 메세지를 전달한다. 
-				매개변수로 name이 있는경우와 없는경우를 구분해서
-				메세지를 전달하게된다. 
-				 */
-				if(name.equals("")) {
-					//접속, 퇴장에서 사용되는 부분
-					it_out.println(msg);
+				if(flag.equals("One")) {
+					//flag가 one이면 해당 클라이언트 한명에게만 전송한다.(귓속말)
+					
+					if(name.equals(clientName)) {
+						//컬렉션에 저장된 접속자명과 일치하는 경우에만 메세지를 전송한다.
+						it_out.println("[귓속말]" + msg);
+					}
 				}
 				else {
-					//메세지를 보낼때 사용되는 부분
-					it_out.println("["+ name +"] "+ msg);
+					//그외에는 모든 클라이언트에게 전송한다.
+					/*
+					클라이언트에게 메세지를 전달한다. 
+					매개변수로 name이 있는경우와 없는경우를 구분해서
+					메세지를 전달하게된다. 
+					 */
+					if(name.equals("")) {
+						//접속, 퇴장에서 사용되는 부분
+						it_out.println(msg);
+					}
+					else {
+						//메세지를 보낼때 사용되는 부분
+						it_out.println("["+ name +"] "+ msg);
+					}
 				}
 			}
 			catch(Exception e) {
@@ -136,7 +154,7 @@ public class MultiServer {
 				방금 접속한 클라이언트를 제외한 나머지에게 사용자의
 				입장을 알려준다. 
 				 */
-				sendAllMsg("", name + "님이 입장하셨습니다.");
+				sendAllMsg("", name + "님이 입장하셨습니다.", "All");
 				
 				//현재 접속자의 정보를 HashMap에 저장한다. 
 				clientMap.put(name, out);
@@ -151,9 +169,25 @@ public class MultiServer {
 					s = in.readLine();
 					if ( s == null )
 						break;
-
+					
+					//서버의 콘솔에 출력되고
 					System.out.println(name + " >> " + s);
-					sendAllMsg(name, s);
+					
+					
+					//클라이언트 측으로 전송한다.
+					if(s.charAt(0)=='/') {
+						String [] strArr = s.split(" ");
+						String msgContent ="";
+						for(int i=2; i<strArr.length; i++) {
+							msgContent += strArr[i]+" ";
+						}
+						if(strArr[0].equals("/to")){
+							sendAllMsg(strArr[1], msgContent, "One");
+						}
+					}
+					else {
+						sendAllMsg(name, s, "All");	
+					}
 				}
 			}
 			catch (Exception e) {
@@ -166,7 +200,7 @@ public class MultiServer {
 				삭제한다. 
 				 */
 				clientMap.remove(name);
-				sendAllMsg("", name + "님이 퇴장하셨습니다.");
+				sendAllMsg("", name + "님이 퇴장하셨습니다.", "All");
 				//퇴장하는 클라이언트의 쓰레드명을 보여준다. 
 				System.out.println(name + " [" + Thread.currentThread().getName() +  "] 퇴장");
 				System.out.println("현재 접속자 수는 "+clientMap.size()+"명 입니다.");
