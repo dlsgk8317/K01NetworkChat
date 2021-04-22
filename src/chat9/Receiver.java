@@ -1,10 +1,11 @@
-package chat8;
+package chat9;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 
 //서버가 보내는 Echo메세지를 읽어오는 쓰레드 클래스
 public class Receiver extends Thread {
@@ -25,19 +26,10 @@ public class Receiver extends Thread {
 
 	@Override
 	public void run() {
- 
+
 		while(in != null) {
 			try {
-				System.out.println("Thread Receive : "+  URLDecoder.decode(in.readLine(), "UTF-8"));
-//				if(in.readLine() == null) {
-//					System.out.println("중복꺼져");
-//					break;
-//						
-//				}
-//				else {
-//				System.out.println("Thread Receive : "+ URLDecoder.decode(in.readLine(), "UTF-8"));
-//				break;
-//				}
+				System.out.println("Thread Receive : "+ URLDecoder.decode(in.readLine(), "UTF-8"));
 			}
 			catch(SocketException ne) {
 				System.out.println("SocketException");
@@ -45,7 +37,6 @@ public class Receiver extends Thread {
 			}
 			catch (Exception e) {
 				System.out.println("예외>Receiver>run1:"+ e);
-				break;
 			}
 		}
 
